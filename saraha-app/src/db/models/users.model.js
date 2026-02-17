@@ -15,6 +15,7 @@ const userSchema = new Schema(
       required: true,
       unique: true,
     },
+    otpExpire: Date,
     password: {
       type: String,
       required: true,

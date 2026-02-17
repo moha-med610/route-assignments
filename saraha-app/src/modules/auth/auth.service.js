@@ -21,6 +21,7 @@ export const signupService = async ({
     lastName,
     email,
     password: hashedPassword,
+    otpExpire: new Date(Date.now() + 5 * 60 * 1000),
   });
 
   sendEmail({
@@ -44,6 +45,9 @@ export const loginService = async ({ email, password }) => {
   if (!isCorrectPassword) {
     throw new ServerError(false, 400, "Invalid Credentials");
   }
+
+  findUser.otpExpire = new Date(Date.now() + 5 * 60 * 1000);
+  await findUser.save();
 
   sendEmail({
     email: findUser.email,

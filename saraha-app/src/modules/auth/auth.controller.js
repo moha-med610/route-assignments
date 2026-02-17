@@ -17,7 +17,6 @@ router.post("/signup", async (req, res) => {
     statusCode: 201,
     success: true,
     message: "user Created Successfully",
-    data,
   });
 });
 router.post("/login", async (req, res) => {
@@ -30,7 +29,6 @@ router.post("/login", async (req, res) => {
     statusCode: 202,
     success: true,
     message: "Welcome Back Again",
-    data,
   });
 });
 
