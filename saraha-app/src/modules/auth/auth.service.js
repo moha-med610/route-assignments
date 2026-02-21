@@ -3,6 +3,7 @@ import { sendEmail } from "../../config/nodemailer.config.js";
 import { otp } from "../../utils/otpGenerator.js";
 import { ServerError } from "../../utils/serverError.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 export const signupService = async ({
   firstName,
@@ -24,6 +25,21 @@ export const signupService = async ({
     otpExpire: new Date(Date.now() + 5 * 60 * 1000),
   });
 
+  const token = jwt.sign(
+    { id: newUser._id },
+    process.env.ACCESS_TOKEN_SECRET_KEY,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRE_IN,
+    },
+  );
+  const refreshToken = jwt.sign(
+    { id: newUser._id },
+    process.env.REFRESH_TOKEN_SECRET_KEY,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRE_IN,
+    },
+  );
+
   sendEmail({
     email: newUser.email,
     otp,
@@ -31,7 +47,7 @@ export const signupService = async ({
   }).catch((e) => console.log("Error to Send Email"));
 
   await newUser.save();
-  return newUser;
+  return { token, refreshToken };
 };
 
 export const loginService = async ({ email, password }) => {
@@ -49,10 +65,25 @@ export const loginService = async ({ email, password }) => {
   findUser.otpExpire = new Date(Date.now() + 5 * 60 * 1000);
   await findUser.save();
 
+  const token = jwt.sign(
+    { id: findUser._id },
+    process.env.ACCESS_TOKEN_SECRET_KEY,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRE_IN,
+    },
+  );
+  const refreshToken = jwt.sign(
+    { id: findUser._id },
+    process.env.REFRESH_TOKEN_SECRET_KEY,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRE_IN,
+    },
+  );
+
   sendEmail({
     email: findUser.email,
     userName: findUser.firstName,
     otp,
   });
-  return findUser;
+  return { token, refreshToken };
 };
