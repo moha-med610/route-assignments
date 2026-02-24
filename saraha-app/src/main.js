@@ -3,12 +3,14 @@ import { connectDb } from "./db/db.connection.js";
 import { errorHandlingMiddleware } from "./middlewares/serverErrorHandler.js";
 import { notFoundMiddleware } from "./middlewares/notFoundHandler.js";
 import authRouter from "./modules/auth/auth.controller.js";
+import cors from "cors";
 
 export const main = async () => {
   const app = express();
   const PORT = process.env.PORT || 3000;
 
   app.use(express.json());
+  app.use(cors());
 
   // routes
   app.use("/auth", authRouter);

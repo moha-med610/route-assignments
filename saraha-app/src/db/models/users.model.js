@@ -1,14 +1,21 @@
 import mongoose, { model, Schema } from "mongoose";
+import { ROLES } from "../../constants/roles.js";
+import { PROVIDER } from "../../constants/provider.js";
+import bcrypt from "bcrypt";
 
 const userSchema = new Schema(
   {
     firstName: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.provider || this.provider === PROVIDER.system;
+      },
     },
     lastName: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.provider || this.provider === PROVIDER.system;
+      },
     },
     email: {
       type: String,
@@ -18,7 +25,19 @@ const userSchema = new Schema(
     otpExpire: Date,
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.provider || this.provider === PROVIDER.system;
+      },
+    },
+    role: {
+      type: Number,
+      enum: Object.values(ROLES),
+      default: ROLES.USER,
+    },
+    provider: {
+      type: Number,
+      enum: Object.values(PROVIDER),
+      default: PROVIDER.system,
     },
     isActivate: {
       type: Boolean,
