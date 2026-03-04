@@ -2,9 +2,6 @@ import { ServerError } from "../utils/serverError.js";
 
 export const checkRole = (...roles) => {
   return (req, res, next) => {
-    console.log(req.user.role);
-    console.log(`Allowed Role: ${roles}`);
-
     if (!roles.includes(req.user.role)) {
       throw new ServerError(
         false,

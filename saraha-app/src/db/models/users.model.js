@@ -5,6 +5,9 @@ import bcrypt from "bcrypt";
 
 const userSchema = new Schema(
   {
+    profileImage: {
+      type: String,
+    },
     firstName: {
       type: String,
       required: function () {
@@ -44,6 +47,10 @@ const userSchema = new Schema(
       default: false,
     },
     deletedAt: Date,
+    profileVisitCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

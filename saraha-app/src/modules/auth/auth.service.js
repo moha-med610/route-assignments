@@ -64,7 +64,7 @@ export const loginService = async ({ email, password }) => {
   if (!findUser) {
     throw new ServerError(false, 400, "Invalid Credentials");
   }
-  if (findUser.provider === Provider.google) {
+  if (findUser.provider === PROVIDER.google) {
     throw new ServerError(false, 400, "use google login");
   }
 
@@ -102,8 +102,7 @@ export const loginService = async ({ email, password }) => {
 export const googleSignUp = async ({ googleToken }) => {
   const ticket = await client.verifyIdToken({
     idToken: googleToken,
-    audience:
-      "515013149412-1phms59iupdf2gao7806cckqetfcvp80.apps.googleusercontent.com",
+    audience: process.env.GOOGLE_CLIENT_ID,
   });
 
   const { name, email, email_verified } = ticket.getPayload();

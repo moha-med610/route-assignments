@@ -1,6 +1,4 @@
-import { ServerError } from "../utils/serverError.js";
-
-const data = ["body", "params", "query"];
+const data = ["body", "params", "query", "file", "files"];
 
 export const validation = (schema) => {
   return (req, res, next) => {
