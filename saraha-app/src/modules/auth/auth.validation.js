@@ -1,5 +1,6 @@
 import joi from "joi";
 import { ROLES } from "../../constants/roles.js";
+import { Logout } from "../../constants/flag.js";
 
 export const signupSchema = {
   body: joi.object({
@@ -15,5 +16,14 @@ export const loginSchema = {
   body: joi.object({
     email: joi.string().email().required(),
     password: joi.string().min(8).required(),
+  }),
+};
+
+export const logoutSchema = {
+  body: joi.object({
+    flag: joi
+      .string()
+      .valid(...Object.values(Logout))
+      .required(),
   }),
 };

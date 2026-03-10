@@ -4,7 +4,7 @@ import { response } from "../../utils/response.js";
 import { verifyToken } from "../../middlewares/verifyToken.js";
 import { checkRole } from "../../middlewares/checkRole.js";
 import { ROLES } from "../../constants/roles.js";
-import { loginSchema, signupSchema } from "./auth.validation.js";
+import { loginSchema, logoutSchema, signupSchema } from "./auth.validation.js";
 import { validation } from "../../middlewares/validation.middleware.js";
 
 const router = Router();
@@ -64,5 +64,27 @@ router.post("/signup/gmail", async (req, res) => {
     message: "Successfully Signup with Google",
   });
 });
+
+router.patch(
+  "/logout",
+  verifyToken,
+  validation(logoutSchema),
+  async (req, res) => {
+    const { flag } = req.body;
+
+    await service.logoutService({
+      user: req.user,
+      jti: req.decoded.jti,
+      iat: req.decoded.iat,
+      flag,
+    });
+
+    return response({
+      res,
+      message: "Logged out successfully",
+      data: {},
+    });
+  },
+);
 
 export default router;

@@ -3,9 +3,11 @@ import { sendEmail } from "../../config/nodemailer.config.js";
 import { otp } from "../../utils/otpGenerator.js";
 import { ServerError } from "../../utils/serverError.js";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import { PROVIDER } from "../../constants/provider.js";
+import { Logout } from "../../constants/flag.js";
+import { accessTokenService, refreshTokenService } from "../../utils/tokens.js";
+import { RevokeToken } from "../../db/models/token.model.js";
 
 const client = new OAuth2Client();
 
@@ -34,20 +36,13 @@ export const signupService = async ({
 
   await newUser.save();
 
-  const token = jwt.sign(
-    { id: newUser._id, role: newUser.role },
-    process.env.ACCESS_TOKEN_SECRET_KEY,
-    {
-      expiresIn: process.env.ACCESS_TOKEN_EXPIRE_IN,
-    },
-  );
-  const refreshToken = jwt.sign(
-    { id: newUser._id, role: newUser.role },
-    process.env.REFRESH_TOKEN_SECRET_KEY,
-    {
-      expiresIn: process.env.REFRESH_TOKEN_EXPIRE_IN,
-    },
-  );
+  const accessToken = accessTokenService({
+    payload: { id: newUser._id, role: newUser.role, email: newUser.email },
+  });
+
+  const refreshToken = refreshTokenService({
+    payload: { id: newUser._id, role: newUser.role, email: newUser.email },
+  });
 
   sendEmail({
     email: newUser.email,
@@ -55,7 +50,7 @@ export const signupService = async ({
     userName: newUser.firstName,
   }).catch((e) => console.log("Error to Send Email"));
 
-  return { token, refreshToken };
+  return { accessToken, refreshToken };
 };
 
 export const loginService = async ({ email, password }) => {
@@ -76,27 +71,20 @@ export const loginService = async ({ email, password }) => {
   findUser.otpExpire = new Date(Date.now() + 5 * 60 * 1000);
   await findUser.save();
 
-  const token = jwt.sign(
-    { id: findUser._id, role: findUser.role },
-    process.env.ACCESS_TOKEN_SECRET_KEY,
-    {
-      expiresIn: process.env.ACCESS_TOKEN_EXPIRE_IN,
-    },
-  );
-  const refreshToken = jwt.sign(
-    { id: findUser._id, role: findUser.role },
-    process.env.REFRESH_TOKEN_SECRET_KEY,
-    {
-      expiresIn: process.env.REFRESH_TOKEN_EXPIRE_IN,
-    },
-  );
+  const accessToken = accessTokenService({
+    payload: { id: findUser._id, role: findUser.role, email: findUser.email },
+  });
+
+  const refreshToken = refreshTokenService({
+    payload: { id: findUser._id, role: findUser.role, email: findUser.email },
+  });
 
   sendEmail({
     email: findUser.email,
     userName: findUser.firstName,
     otp,
   });
-  return { token, refreshToken };
+  return { accessToken, refreshToken };
 };
 
 export const googleSignUp = async ({ googleToken }) => {
@@ -108,6 +96,7 @@ export const googleSignUp = async ({ googleToken }) => {
   const { name, email, email_verified } = ticket.getPayload();
 
   const isEmailExist = await Users.findOne({ email });
+
   let accessToken;
   let refreshToken;
 
@@ -115,43 +104,52 @@ export const googleSignUp = async ({ googleToken }) => {
     if (isEmailExist.provider === PROVIDER.system) {
       throw new ServerError(false, 400, "use system login");
     }
-    accessToken = jwt.sign(
-      { id: isEmailExist._id, role: isEmailExist.role },
-      process.env.ACCESS_TOKEN_SECRET_KEY,
-      {
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRE_IN,
+
+    accessToken = accessTokenService({
+      payload: {
+        id: isEmailExist._id,
+        role: isEmailExist.role,
+        email: isEmailExist.email,
       },
-    );
-    refreshToken = jwt.sign(
-      { id: isEmailExist._id, role: isEmailExist.role },
-      process.env.REFRESH_TOKEN_SECRET_KEY,
-      {
-        expiresIn: process.env.REFRESH_TOKEN_EXPIRE_IN,
+    });
+
+    refreshToken = refreshTokenService({
+      payload: {
+        id: isEmailExist._id,
+        role: isEmailExist.role,
+        email: isEmailExist.email,
       },
-    );
+    });
   } else {
-    const newUser = Users.create({
+    const newUser = await Users.create({
       userName: name,
       email,
       provider: PROVIDER.google,
       isActivate: email_verified,
     });
 
-    accessToken = jwt.sign(
-      { id: newUser._id, role: newUser.role },
-      process.env.ACCESS_TOKEN_SECRET_KEY,
-      {
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRE_IN,
-      },
-    );
-    refreshToken = jwt.sign(
-      { id: newUser._id, role: newUser.role },
-      process.env.REFRESH_TOKEN_SECRET_KEY,
-      {
-        expiresIn: process.env.REFRESH_TOKEN_EXPIRE_IN,
-      },
-    );
+    accessToken = accessTokenService({
+      payload: { id: newUser._id, role: newUser.role, email: newUser.email },
+    });
+
+    refreshToken = refreshTokenService({
+      payload: { id: newUser._id, role: newUser.role, email: newUser.email },
+    });
   }
 
   return { accessToken, refreshToken };
+};
+
+export const logoutService = async ({ user, jti, iat, flag = Logout.all }) => {
+  if (flag == Logout.all) {
+    user.credential_change_at = new Date();
+    await user.save();
+  } else {
+    await RevokeToken.create({
+      userId: user.id,
+      jti,
+      expireIn: new Date((iat + 14 * 24 * 60 * 60) * 1000),
+    });
+  }
+  return { msg: "Logged out Successfully" };
 };

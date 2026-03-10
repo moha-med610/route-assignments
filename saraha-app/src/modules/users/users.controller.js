@@ -65,4 +65,22 @@ router.patch(
   },
 );
 
+router.patch(
+  "/update-password",
+  verifyToken,
+  validation(validators.updatePasswordSchema),
+  async (req, res) => {
+    const { password, newPassword, repeatNewPassword } = req.body;
+    await service.updateUserPassword({
+      user: req.user,
+      password,
+      newPassword,
+      repeatNewPassword,
+    });
+    return response({
+      res,
+      message: "Password updated successfully",
+    });
+  },
+);
 export default router;

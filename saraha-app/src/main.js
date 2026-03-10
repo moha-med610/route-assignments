@@ -5,6 +5,7 @@ import { notFoundMiddleware } from "./middlewares/notFoundHandler.js";
 import authRouter from "./modules/auth/auth.controller.js";
 import cors from "cors";
 import usersRouter from "./modules/users/users.controller.js";
+import { redisConnect } from "./db/redis.connection.js";
 
 export const main = async () => {
   const app = express();
@@ -26,6 +27,7 @@ export const main = async () => {
   app.listen(PORT, async () => {
     try {
       await connectDb();
+      await redisConnect();
       console.log(`Server is Running on http://localhost:${PORT}`);
     } catch (error) {
       console.log(`Failed To Running Server: ${error.message}`);

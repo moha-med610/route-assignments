@@ -14,3 +14,11 @@ export const profileImageSchema = {
   destination: Joi.string().required(),
   size: Joi.number().required(),
 };
+
+export const updatePasswordSchema = {
+  body: Joi.object({
+    password: Joi.string().min(8).required(),
+    newPassword: Joi.string().min(8).required(),
+    repeatNewPassword: Joi.string().min(8).required(),
+  }),
+};

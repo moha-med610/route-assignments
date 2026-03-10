@@ -46,6 +46,8 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+
+    credential_change_at: Date,
     deletedAt: Date,
     profileVisitCount: {
       type: Number,
@@ -79,4 +81,14 @@ userSchema
   .get(function () {
     return `${this.firstName} ${this.lastName}`;
   });
+
+userSchema.index(
+  {
+    createdAt: 1,
+  },
+  {
+    expireAfterSeconds: 60 * 60 * 24,
+    partialFilterExpression: { isActivate: false },
+  },
+);
 export const Users = mongoose.models.User || model("User", userSchema);

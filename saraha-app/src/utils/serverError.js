@@ -5,3 +5,13 @@ export class ServerError extends Error {
     this.code = code;
   }
 }
+
+export class ServerResponse extends Response {
+  constructor(success = true, code = 200, message, data) {
+    super();
+    this.success = success;
+    this.code = code;
+    this.message = message;
+    this.data = data;
+  }
+}
